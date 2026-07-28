@@ -8,6 +8,7 @@ const routes = [
   { path: '/medicamentos', name: 'medicamentos', component: () => import('../views/MedicamentosView.vue') },
   { path: '/ventas', name: 'ventas', component: () => import('../views/VentasView.vue'),
     meta: { roles: [ROLES.ADMIN, ROLES.VENDEDOR] } },
+  { path: '/ventas/:id/factura', name: 'factura-venta', component: () => import('../views/FacturaVenta.vue') },
   { path: '/clientes', name: 'clientes', component: () => import('../views/ClientesView.vue') },
   { path: '/proveedores', name: 'proveedores', component: () => import('../views/ProveedoresView.vue'),
     meta: { roles: [ROLES.ADMIN, ROLES.BODEGUERO] } },

@@ -200,6 +200,7 @@ tbody tr:hover { background: rgba(255,255,255,.02); }
 .action-btn:hover { color: var(--text); }
 .action-btn.edit:hover { color: var(--accent); border-color: var(--accent); }
 .action-btn.del:hover  { color: var(--red); border-color: var(--red); }
+.action-btn.print:hover { color: var(--accent); border-color: var(--accent); }
 
 /* ---------- Forms / Modal ---------- */
 .modal-overlay {
@@ -246,3 +247,13 @@ tbody tr:hover { background: rgba(255,255,255,.02); }
 
 .empty { text-align: center; color: var(--text-muted); padding: 40px 0; }
 .spinner { text-align: center; color: var(--text-muted); padding: 30px 0; }
+
+/* ---------- Impresión ----------
+   La vista de comprobante marca el body con esta clase mientras está montada,
+   para neutralizar el tema oscuro sin afectar al resto de la aplicación. */
+body.modo-impresion { background: #fff; color: #1f2430; }
+
+@media print {
+  @page { margin: 14mm; }
+  body.modo-impresion { background: #fff; }
+}

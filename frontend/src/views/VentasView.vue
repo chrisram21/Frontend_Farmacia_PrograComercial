@@ -25,8 +25,8 @@
               </span>
             </td>
             <td>
+              <button class="action-btn print" title="Imprimir factura" @click="imprimirFactura(v)">🖨</button>
               <button v-if="v.estado_venta" class="action-btn del" title="Anular" @click="anular(v)">🗑</button>
-              <span v-else class="muted">—</span>
             </td>
           </tr>
         </tbody>
@@ -86,12 +86,14 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import AppLayout from '../components/layout/AppLayout.vue';
 import Modal from '../components/ui/Modal.vue';
 import api from '../services/api.js';
 import { useAuthStore } from '../stores/auth.js';
 
 const auth = useAuthStore();
+const router = useRouter();
 
 const ventas = ref([]);
 const clientes = ref([]);
@@ -160,6 +162,17 @@ async function guardar() {
   } finally {
     saving.value = false;
   }
+}
+
+/**
+* Abre el comprobante de una venta en una pestaña nueva, para no perder de vista
+* el listado ni el estado del modal.
+*
+* @param {object} v venta cuyo comprobante se quiere imprimir
+**/
+function imprimirFactura(v) {
+  const { href } = router.resolve({ name: 'factura-venta', params: { id: v.id_venta } });
+  window.open(href, '_blank');
 }
 
 async function anular(v) {
