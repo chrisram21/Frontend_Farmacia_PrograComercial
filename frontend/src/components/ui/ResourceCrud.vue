@@ -72,7 +72,7 @@ const props = defineProps({
   singular: { type: String, default: 'registro' },
   apiPath: String,
   pk: String,
-  columns: Array,   // [{ key, label, type?: 'bool'|'money'|'relation', path? }]
+  columns: Array,   // [{ key, label, type?: 'bool'|'money'|'estado', path?, render? }]
   fields: Array,    // [{ key, label, type, optionsApi, optionValue, optionLabel }]
   writeRoles: { type: Array, default: null },
 });
@@ -136,7 +136,9 @@ async function save() {
   formError.value = '';
   try {
     const payload = {};
-    props.fields.forEach((f) => { payload[f.key] = form[f.key]; });
+    props.fields.forEach((f) => {
+      payload[f.key] = form[f.key] === '' ? null : form[f.key];
+    });
     if (editing.value) {
       await api.put(`${props.apiPath}/${form[props.pk]}`, payload);
     } else {
@@ -161,7 +163,17 @@ async function remove(row) {
   }
 }
 
+/**
+* Convierte una celda a HTML segun el tipo declarado en la columna. Si la columna
+* trae su propia funcion `render`, esa manda: permite que cada vista arme
+* etiquetas propias sin meter logica de un recurso concreto en este componente.
+*
+* @param {object} row registro de la fila
+* @param {object} c definicion de la columna
+* @returns {string} el HTML que se pinta en la celda
+**/
 function render(row, c) {
+  if (typeof c.render === 'function') return c.render(row);
   let val = c.path ? c.path.split('.').reduce((o, k) => o?.[k], row) : row[c.key];
   if (c.type === 'bool') {
     return val

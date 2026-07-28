@@ -13,6 +13,34 @@
 
     <div class="card panel" style="margin-top:22px">
       <div class="panel__head">
+        <div class="panel__title">Alertas de inventario</div>
+        <router-link class="link-accent" to="/medicamentos">Ver medicamentos →</router-link>
+      </div>
+      <div class="grid grid-3">
+        <div v-for="cat in categorias" :key="cat.key" class="card alerta" :class="`alerta--${cat.color}`">
+          <div class="alerta__head">
+            <div class="alerta__icon">{{ cat.icon }}</div>
+            <div>
+              <div class="alerta__label">{{ cat.label }}</div>
+              <div class="alerta__value">{{ cat.total }}</div>
+            </div>
+          </div>
+          <div v-if="cat.items.length" class="alerta__list">
+            <div v-for="med in cat.items.slice(0, 4)" :key="med.id_medicamento" class="alerta__item">
+              <span>{{ med.nombre_medicamento }}</span>
+              <span>{{ cat.detalle(med) }}</span>
+            </div>
+            <div v-if="cat.items.length > 4" class="alerta__empty">
+              y {{ cat.items.length - 4 }} más…
+            </div>
+          </div>
+          <div v-else class="alerta__empty">Sin medicamentos en esta condición.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card panel" style="margin-top:22px">
+      <div class="panel__head">
         <div class="panel__title">Ventas recientes</div>
         <router-link class="link-accent" to="/ventas">Ver todas →</router-link>
       </div>
@@ -42,21 +70,60 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import AppLayout from '../components/layout/AppLayout.vue';
 import StatCard from '../components/ui/StatCard.vue';
 import api from '../services/api.js';
 
+const DIAS_POR_VENCER = 30;
+
 const loading = ref(true);
 const ventas = ref([]);
 const stats = reactive({ ventas: 0, medicamentos: 0, clientes: 0, ingresos: 0 });
+const alertas = reactive({
+  stockBajo: { total: 0, items: [] },
+  porVencer: { total: 0, items: [] },
+  vencidos: { total: 0, items: [] },
+});
+
+/**
+* Describe los tres indicadores del panel de alertas y los enlaza con la
+* respuesta del endpoint. Cada uno define su color, su icono y que dato del
+* medicamento se muestra como detalle en el listado.
+*
+* @returns {Array<object>} indicadores listos para pintar
+**/
+const categorias = computed(() => [
+  {
+    key: 'stockBajo',
+    icon: '📦',
+    label: 'Stock bajo',
+    color: 'orange',
+    detalle: (med) => `${med.existencia_total} / ${med.stock_minimo}`,
+  },
+  {
+    key: 'porVencer',
+    icon: '⏳',
+    label: `Por vencer (${DIAS_POR_VENCER} días)`,
+    color: 'yellow',
+    detalle: (med) => med.fecha_vencimiento,
+  },
+  {
+    key: 'vencidos',
+    icon: '⚠️',
+    label: 'Vencidos',
+    color: 'red',
+    detalle: (med) => med.fecha_vencimiento,
+  },
+].map((cat) => ({ ...cat, total: alertas[cat.key].total, items: alertas[cat.key].items })));
 
 onMounted(async () => {
   try {
-    const [ventasRes, medsRes, clientesRes] = await Promise.all([
+    const [ventasRes, medsRes, clientesRes, alertasRes] = await Promise.all([
       api.get('/ventas'),
       api.get('/medicamentos'),
       api.get('/clientes'),
+      api.get('/medicamentos/alertas', { params: { dias: DIAS_POR_VENCER } }),
     ]);
     ventas.value = ventasRes.data;
     stats.ventas = ventasRes.data.length;
@@ -65,6 +132,7 @@ onMounted(async () => {
     stats.ingresos = ventasRes.data
       .filter((v) => v.estado_venta)
       .reduce((sum, v) => sum + Number(v.total_venta), 0);
+    Object.assign(alertas, alertasRes.data);
   } finally {
     loading.value = false;
   }
