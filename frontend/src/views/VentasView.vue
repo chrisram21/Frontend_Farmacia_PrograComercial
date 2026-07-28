@@ -3,7 +3,10 @@
     <div class="card panel">
       <div class="panel__head">
         <div class="panel__title">Registro de ventas</div>
-        <button class="btn btn--primary" @click="abrirNueva">+ Nueva venta</button>
+        <div class="panel__acciones">
+          <input class="buscador" type="search" v-model="search" placeholder="Folio o cliente…" />
+          <button class="btn btn--primary" @click="abrirNueva">+ Nueva venta</button>
+        </div>
       </div>
 
       <div v-if="loading" class="spinner">Cargando…</div>
@@ -31,7 +34,11 @@
           </tr>
         </tbody>
       </table>
-      <div v-else class="empty">Aún no hay ventas registradas.</div>
+      <div v-else class="empty">
+        {{ search ? 'No hay ventas para esa búsqueda.' : 'Aún no hay ventas registradas.' }}
+      </div>
+
+      <Paginacion :meta="meta" @cambiar="irAPagina" />
     </div>
 
     <!-- Modal nueva venta -->
@@ -85,17 +92,24 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import AppLayout from '../components/layout/AppLayout.vue';
 import Modal from '../components/ui/Modal.vue';
+import Paginacion from '../components/ui/Paginacion.vue';
 import api from '../services/api.js';
 import { useAuthStore } from '../stores/auth.js';
+import { LIMITE_OPCIONES, ESPERA_BUSQUEDA } from '../config/listados.js';
+
+const LIMITE_VENTAS = 10;
 
 const auth = useAuthStore();
 const router = useRouter();
 
 const ventas = ref([]);
+const meta = ref({ total: 0, page: 1, limit: LIMITE_VENTAS, totalPages: 0 });
+const page = ref(1);
+const search = ref('');
 const clientes = ref([]);
 const metodos = ref([]);
 const medicamentos = ref([]);
@@ -108,10 +122,30 @@ const venta = reactive({ id_cliente: null, id_metodo_pago: null, detalles: [] })
 
 async function cargar() {
   loading.value = true;
-  const { data } = await api.get('/ventas');
-  ventas.value = data;
-  loading.value = false;
+  try {
+    const { data } = await api.get('/ventas', {
+      params: { page: page.value, limit: LIMITE_VENTAS, search: search.value || undefined },
+    });
+    ventas.value = data.data;
+    meta.value = data.meta;
+  } finally {
+    loading.value = false;
+  }
 }
+
+function irAPagina(nueva) {
+  page.value = nueva;
+  cargar();
+}
+
+let temporizador = null;
+watch(search, () => {
+  clearTimeout(temporizador);
+  temporizador = setTimeout(() => {
+    page.value = 1;
+    cargar();
+  }, ESPERA_BUSQUEDA);
+});
 
 async function abrirNueva() {
   error.value = '';
@@ -119,12 +153,13 @@ async function abrirNueva() {
   venta.id_metodo_pago = null;
   venta.detalles = [{ id_medicamento: null, cantidad_detalle_venta: 1 }];
   if (!clientes.value.length) {
+    const params = { params: { limit: LIMITE_OPCIONES } };
     const [c, m, med] = await Promise.all([
-      api.get('/clientes'), api.get('/metodos-pago'), api.get('/medicamentos'),
+      api.get('/clientes', params), api.get('/metodos-pago', params), api.get('/medicamentos', params),
     ]);
-    clientes.value = c.data;
-    metodos.value = m.data;
-    medicamentos.value = med.data;
+    clientes.value = c.data.data;
+    metodos.value = m.data.data;
+    medicamentos.value = med.data.data;
   }
   showModal.value = true;
 }

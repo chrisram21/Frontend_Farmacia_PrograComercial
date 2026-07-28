@@ -248,6 +248,31 @@ tbody tr:hover { background: rgba(255,255,255,.02); }
 .empty { text-align: center; color: var(--text-muted); padding: 40px 0; }
 .spinner { text-align: center; color: var(--text-muted); padding: 30px 0; }
 
+/* ---------- Buscador y paginación ---------- */
+.panel__acciones { display: flex; align-items: center; gap: 12px; }
+.buscador {
+  width: 220px; padding: 9px 12px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg-input); color: var(--text);
+  outline: none; font-size: 14px;
+}
+.buscador:focus { border-color: var(--accent); }
+.buscador::placeholder { color: var(--text-muted); }
+
+.paginacion {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 14px; flex-wrap: wrap;
+  margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+.paginacion__ctrl { display: flex; align-items: center; gap: 12px; }
+.paginacion__ctrl .btn { padding: 7px 14px; font-size: 13px; }
+.paginacion__ctrl .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+@media (max-width: 720px) {
+  .panel__acciones { flex-direction: column; align-items: stretch; }
+  .buscador { width: 100%; }
+}
+
 /* ---------- Impresión ----------
    La vista de comprobante marca el body con esta clase mientras está montada,
    para neutralizar el tema oscuro sin afectar al resto de la aplicación. */

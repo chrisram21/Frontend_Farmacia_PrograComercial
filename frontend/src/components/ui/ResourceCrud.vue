@@ -2,7 +2,10 @@
   <div class="card panel">
     <div class="panel__head">
       <div class="panel__title">{{ title }}</div>
-      <button v-if="canWrite" class="btn btn--primary" @click="openCreate">+ Agregar</button>
+      <div class="panel__acciones">
+        <input class="buscador" type="search" v-model="search" placeholder="Buscar…" />
+        <button v-if="canWrite" class="btn btn--primary" @click="openCreate">+ Agregar</button>
+      </div>
     </div>
 
     <div v-if="loading" class="spinner">Cargando…</div>
@@ -25,7 +28,11 @@
       </tbody>
     </table>
 
-    <div v-else class="empty">No hay registros todavía.</div>
+    <div v-else class="empty">
+      {{ search ? 'No hay resultados para esa búsqueda.' : 'No hay registros todavía.' }}
+    </div>
+
+    <Paginacion :meta="meta" @cambiar="irAPagina" />
 
     <!-- Formulario -->
     <Modal v-if="showModal" :title="editing ? `Editar ${singular}` : `Nuevo ${singular}`" @close="showModal = false">
@@ -62,10 +69,12 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted } from 'vue';
 import api from '../../services/api.js';
 import Modal from './Modal.vue';
+import Paginacion from './Paginacion.vue';
 import { useAuthStore } from '../../stores/auth.js';
+import { LIMITE_OPCIONES, ESPERA_BUSQUEDA } from '../../config/listados.js';
 
 const props = defineProps({
   title: String,
@@ -75,12 +84,16 @@ const props = defineProps({
   columns: Array,   // [{ key, label, type?: 'bool'|'money'|'estado', path?, render? }]
   fields: Array,    // [{ key, label, type, optionsApi, optionValue, optionLabel }]
   writeRoles: { type: Array, default: null },
+  limit: { type: Number, default: 10 },
 });
 
 const auth = useAuthStore();
 const canWrite = computed(() => !props.writeRoles || auth.puede(props.writeRoles));
 
 const items = ref([]);
+const meta = ref({ total: 0, page: 1, limit: props.limit, totalPages: 0 });
+const page = ref(1);
+const search = ref('');
 const loading = ref(true);
 const showModal = ref(false);
 const editing = ref(false);
@@ -89,18 +102,57 @@ const formError = ref('');
 const form = reactive({});
 const optionsCache = reactive({});
 
+/**
+* Pide al servidor la página actual del listado con el texto de búsqueda vigente.
+* Si al borrar el último registro de una página esta queda vacía, retrocede una
+* página para no dejar al usuario mirando una tabla vacía.
+*
+* @returns {Promise<void>} actualiza items y meta con la respuesta
+**/
 async function load() {
   loading.value = true;
-  const { data } = await api.get(props.apiPath);
-  items.value = data;
-  loading.value = false;
+  try {
+    const { data } = await api.get(props.apiPath, {
+      params: { page: page.value, limit: props.limit, search: search.value || undefined },
+    });
+    items.value = data.data;
+    meta.value = data.meta;
+
+    if (!items.value.length && meta.value.page > 1) {
+      page.value = meta.value.page - 1;
+      await load();
+    }
+  } finally {
+    loading.value = false;
+  }
 }
 
+function irAPagina(nueva) {
+  page.value = nueva;
+  load();
+}
+
+let temporizador = null;
+watch(search, () => {
+  clearTimeout(temporizador);
+  temporizador = setTimeout(() => {
+    page.value = 1;
+    load();
+  }, ESPERA_BUSQUEDA);
+});
+
+/**
+* Carga las opciones de los campos select desde su propio endpoint. Como esos
+* endpoints ahora vienen paginados, se pide el máximo permitido para que el
+* desplegable no quede recortado.
+*
+* @returns {Promise<void>} llena la caché de opciones
+**/
 async function loadOptions() {
   for (const f of props.fields.filter((x) => x.type === 'select' && x.optionsApi)) {
     if (!optionsCache[f.key]) {
-      const { data } = await api.get(f.optionsApi);
-      optionsCache[f.key] = data;
+      const { data } = await api.get(f.optionsApi, { params: { limit: LIMITE_OPCIONES } });
+      optionsCache[f.key] = data.data;
     }
   }
 }

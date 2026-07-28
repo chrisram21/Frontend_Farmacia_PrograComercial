@@ -3,20 +3,20 @@
     <div class="card panel">
       <div class="panel__head">
         <div class="panel__title">Bitácora de acciones</div>
-        <span class="muted">{{ entradas.length }} registro(s)</span>
+        <span class="muted">{{ meta.total }} registro(s)</span>
       </div>
 
       <div class="field-row" style="margin-bottom:18px">
         <div class="field">
           <label>Entidad</label>
-          <select v-model="filtros.entidad" @change="cargar">
+          <select v-model="filtros.entidad" @change="filtrar">
             <option :value="''">Todas</option>
             <option v-for="e in entidades" :key="e" :value="e">{{ e }}</option>
           </select>
         </div>
         <div class="field">
           <label>Acción</label>
-          <select v-model="filtros.accion" @change="cargar">
+          <select v-model="filtros.accion" @change="filtrar">
             <option :value="''">Todas</option>
             <option v-for="a in ACCIONES" :key="a" :value="a">{{ a }}</option>
           </select>
@@ -47,6 +47,8 @@
         </tbody>
       </table>
       <div v-else class="empty">No hay entradas para estos filtros.</div>
+
+      <Paginacion :meta="meta" @cambiar="irAPagina" />
     </div>
   </AppLayout>
 </template>
@@ -54,7 +56,10 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
 import AppLayout from '../components/layout/AppLayout.vue';
+import Paginacion from '../components/ui/Paginacion.vue';
 import api from '../services/api.js';
+
+const LIMITE_AUDITORIA = 25;
 
 const ACCIONES = ['CREAR', 'ACTUALIZAR', 'ELIMINAR', 'ANULAR', 'LOGIN'];
 const COLOR_ACCION = {
@@ -68,6 +73,8 @@ const CAMPOS_OMITIDOS = ['timestamp', 'createdAt', 'updatedAt'];
 
 const entradas = ref([]);
 const entidades = ref([]);
+const meta = ref({ total: 0, page: 1, limit: LIMITE_AUDITORIA, totalPages: 0 });
+const page = ref(1);
 const loading = ref(true);
 const filtros = reactive({ entidad: '', accion: '' });
 
@@ -119,17 +126,28 @@ const resumen = (entrada) => {
 async function cargar() {
   loading.value = true;
   try {
-    const params = {};
+    const params = { page: page.value, limit: LIMITE_AUDITORIA };
     if (filtros.entidad) params.entidad = filtros.entidad;
     if (filtros.accion) params.accion = filtros.accion;
     const { data } = await api.get('/auditoria', { params });
-    entradas.value = data;
+    entradas.value = data.data;
+    meta.value = data.meta;
     // La lista de entidades se acumula para que no se vacíe al filtrar por una.
-    const vistas = new Set([...entidades.value, ...data.map((e) => e.entidad)]);
+    const vistas = new Set([...entidades.value, ...data.data.map((e) => e.entidad)]);
     entidades.value = [...vistas].sort();
   } finally {
     loading.value = false;
   }
+}
+
+function filtrar() {
+  page.value = 1;
+  cargar();
+}
+
+function irAPagina(nueva) {
+  page.value = nueva;
+  cargar();
 }
 
 onMounted(cargar);

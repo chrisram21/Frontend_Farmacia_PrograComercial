@@ -50,7 +50,7 @@
           <tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Método</th><th>Total</th><th>Estado</th></tr>
         </thead>
         <tbody>
-          <tr v-for="v in ventas.slice(0, 6)" :key="v.id_venta">
+          <tr v-for="v in ventas" :key="v.id_venta">
             <td>{{ v.id_venta }}</td>
             <td>{{ v.fecha_venta }}</td>
             <td>{{ v.cliente?.nombre_cliente }}</td>
@@ -74,8 +74,10 @@ import { ref, reactive, computed, onMounted } from 'vue';
 import AppLayout from '../components/layout/AppLayout.vue';
 import StatCard from '../components/ui/StatCard.vue';
 import api from '../services/api.js';
+import { LIMITE_OPCIONES } from '../config/listados.js';
 
 const DIAS_POR_VENCER = 30;
+const VENTAS_RECIENTES = 6;
 
 const loading = ref(true);
 const ventas = ref([]);
@@ -117,19 +119,31 @@ const categorias = computed(() => [
   },
 ].map((cat) => ({ ...cat, total: alertas[cat.key].total, items: alertas[cat.key].items })));
 
+/**
+* Carga las métricas del panel. Los conteos salen de `meta.total`, así que a
+* medicamentos y clientes se les pide una sola fila: interesa el total, no los
+* registros. De ventas sí se trae la primera página completa porque alimenta
+* tres cosas a la vez: el conteo, la tabla de ventas recientes y la suma de
+* ingresos.
+*
+* Nota: los ingresos se suman sobre las ventas traídas (las más recientes), no
+* sobre el histórico completo. Un total exacto necesita una consulta de
+* agregación en el servidor, que corresponde a la fase de reportes.
+**/
 onMounted(async () => {
   try {
+    const soloTotal = { params: { limit: 1 } };
     const [ventasRes, medsRes, clientesRes, alertasRes] = await Promise.all([
-      api.get('/ventas'),
-      api.get('/medicamentos'),
-      api.get('/clientes'),
+      api.get('/ventas', { params: { limit: LIMITE_OPCIONES } }),
+      api.get('/medicamentos', soloTotal),
+      api.get('/clientes', soloTotal),
       api.get('/medicamentos/alertas', { params: { dias: DIAS_POR_VENCER } }),
     ]);
-    ventas.value = ventasRes.data;
-    stats.ventas = ventasRes.data.length;
-    stats.medicamentos = medsRes.data.length;
-    stats.clientes = clientesRes.data.length;
-    stats.ingresos = ventasRes.data
+    ventas.value = ventasRes.data.data.slice(0, VENTAS_RECIENTES);
+    stats.ventas = ventasRes.data.meta.total;
+    stats.medicamentos = medsRes.data.meta.total;
+    stats.clientes = clientesRes.data.meta.total;
+    stats.ingresos = ventasRes.data.data
       .filter((v) => v.estado_venta)
       .reduce((sum, v) => sum + Number(v.total_venta), 0);
     Object.assign(alertas, alertasRes.data);
