@@ -14,15 +14,25 @@
       <thead>
         <tr>
           <th v-for="c in columns" :key="c.key">{{ c.label }}</th>
-          <th v-if="canWrite" style="width:120px">Acciones</th>
+          <th v-if="hayAcciones" style="width:160px">Acciones</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="row in items" :key="row[pk]">
           <td v-for="c in columns" :key="c.key" v-html="render(row, c)"></td>
-          <td v-if="canWrite">
-            <button class="action-btn edit" title="Editar" @click="openEdit(row)">✎</button>
-            <button class="action-btn del" title="Eliminar" @click="remove(row)">🗑</button>
+          <td v-if="hayAcciones">
+            <button
+              v-for="a in rowActions"
+              :key="a.title"
+              class="action-btn"
+              :class="a.clase"
+              :title="a.title"
+              @click="a.onClick(row)"
+            >{{ a.icon }}</button>
+            <template v-if="canWrite">
+              <button class="action-btn edit" title="Editar" @click="openEdit(row)">✎</button>
+              <button class="action-btn del" title="Eliminar" @click="remove(row)">🗑</button>
+            </template>
           </td>
         </tr>
       </tbody>
@@ -85,10 +95,14 @@ const props = defineProps({
   fields: Array,    // [{ key, label, type, optionsApi, optionValue, optionLabel }]
   writeRoles: { type: Array, default: null },
   limit: { type: Number, default: 10 },
+  rowActions: { type: Array, default: () => [] }, // [{ icon, title, clase?, onClick(row) }]
 });
 
 const auth = useAuthStore();
 const canWrite = computed(() => !props.writeRoles || auth.puede(props.writeRoles));
+// Las acciones de fila no dependen de permisos de escritura: sirven para llevar
+// a vistas de solo lectura, así que la columna aparece aunque el rol no escriba.
+const hayAcciones = computed(() => canWrite.value || props.rowActions.length > 0);
 
 const items = ref([]);
 const meta = ref({ total: 0, page: 1, limit: props.limit, totalPages: 0 });

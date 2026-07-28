@@ -10,6 +10,8 @@ const routes = [
     meta: { roles: [ROLES.ADMIN, ROLES.VENDEDOR] } },
   { path: '/ventas/:id/factura', name: 'factura-venta', component: () => import('../views/FacturaVenta.vue') },
   { path: '/clientes', name: 'clientes', component: () => import('../views/ClientesView.vue') },
+  { path: '/clientes/:id/historial', name: 'historial-cliente',
+    component: () => import('../views/HistorialClienteView.vue') },
   { path: '/proveedores', name: 'proveedores', component: () => import('../views/ProveedoresView.vue'),
     meta: { roles: [ROLES.ADMIN, ROLES.BODEGUERO] } },
   { path: '/usuarios', name: 'usuarios', component: () => import('../views/UsuariosView.vue'),
