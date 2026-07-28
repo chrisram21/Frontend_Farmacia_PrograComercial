@@ -2,7 +2,7 @@
   <div class="card panel">
     <div class="panel__head">
       <div class="panel__title">{{ title }}</div>
-      <button class="btn btn--primary" @click="openCreate">+ Agregar</button>
+      <button v-if="canWrite" class="btn btn--primary" @click="openCreate">+ Agregar</button>
     </div>
 
     <div v-if="loading" class="spinner">Cargando…</div>
@@ -11,13 +11,13 @@
       <thead>
         <tr>
           <th v-for="c in columns" :key="c.key">{{ c.label }}</th>
-          <th style="width:120px">Acciones</th>
+          <th v-if="canWrite" style="width:120px">Acciones</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="row in items" :key="row[pk]">
           <td v-for="c in columns" :key="c.key" v-html="render(row, c)"></td>
-          <td>
+          <td v-if="canWrite">
             <button class="action-btn edit" title="Editar" @click="openEdit(row)">✎</button>
             <button class="action-btn del" title="Eliminar" @click="remove(row)">🗑</button>
           </td>
@@ -62,9 +62,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import api from '../../services/api.js';
 import Modal from './Modal.vue';
+import { useAuthStore } from '../../stores/auth.js';
 
 const props = defineProps({
   title: String,
@@ -73,7 +74,11 @@ const props = defineProps({
   pk: String,
   columns: Array,   // [{ key, label, type?: 'bool'|'money'|'relation', path? }]
   fields: Array,    // [{ key, label, type, optionsApi, optionValue, optionLabel }]
+  writeRoles: { type: Array, default: null },
 });
+
+const auth = useAuthStore();
+const canWrite = computed(() => !props.writeRoles || auth.puede(props.writeRoles));
 
 const items = ref([]);
 const loading = ref(true);

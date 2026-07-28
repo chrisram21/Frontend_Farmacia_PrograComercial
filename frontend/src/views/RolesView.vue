@@ -1,7 +1,8 @@
 <template>
   <AppLayout title="Roles">
     <ResourceCrud title="Listado de roles" singular="rol"
-      api-path="/roles" pk="id_rol" :columns="columns" :fields="fields" />
+      api-path="/roles" pk="id_rol" :columns="columns" :fields="fields"
+      :write-roles="[]" />
   </AppLayout>
 </template>
 

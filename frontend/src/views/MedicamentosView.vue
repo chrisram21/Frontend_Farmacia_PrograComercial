@@ -7,6 +7,7 @@
       pk="id_medicamento"
       :columns="columns"
       :fields="fields"
+      :write-roles="[ROLES.BODEGUERO]"
     />
   </AppLayout>
 </template>
@@ -14,6 +15,7 @@
 <script setup>
 import AppLayout from '../components/layout/AppLayout.vue';
 import ResourceCrud from '../components/ui/ResourceCrud.vue';
+import { ROLES } from '../config/roles.js';
 
 const columns = [
   { key: 'codigo_medicamento', label: 'Código' },

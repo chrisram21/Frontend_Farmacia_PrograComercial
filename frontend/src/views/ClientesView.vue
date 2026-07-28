@@ -1,13 +1,15 @@
 <template>
   <AppLayout title="Clientes">
     <ResourceCrud title="Listado de clientes" singular="cliente"
-      api-path="/clientes" pk="id_cliente" :columns="columns" :fields="fields" />
+      api-path="/clientes" pk="id_cliente" :columns="columns" :fields="fields"
+      :write-roles="[ROLES.VENDEDOR]" />
   </AppLayout>
 </template>
 
 <script setup>
 import AppLayout from '../components/layout/AppLayout.vue';
 import ResourceCrud from '../components/ui/ResourceCrud.vue';
+import { ROLES } from '../config/roles.js';
 
 const columns = [
   { key: 'id_cliente', label: '#' },

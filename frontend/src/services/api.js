@@ -11,13 +11,16 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Si el token expira, redirige al login.
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401 && !location.pathname.includes('login')) {
+    const status = err.response?.status;
+    if (status === 401 && !location.pathname.includes('login')) {
       localStorage.removeItem('token');
       location.href = '/login';
+    }
+    if (status === 403) {
+      alert(err.response?.data?.message || 'No tienes permiso para realizar esta acción');
     }
     return Promise.reject(err);
   }

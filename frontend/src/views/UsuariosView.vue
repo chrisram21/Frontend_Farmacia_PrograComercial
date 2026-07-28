@@ -1,7 +1,8 @@
 <template>
   <AppLayout title="Usuarios">
     <ResourceCrud title="Listado de usuarios" singular="usuario"
-      api-path="/usuarios" pk="id_usuario" :columns="columns" :fields="fields" />
+      api-path="/usuarios" pk="id_usuario" :columns="columns" :fields="fields"
+      :write-roles="[]" />
   </AppLayout>
 </template>
 

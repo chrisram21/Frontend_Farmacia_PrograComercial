@@ -1,7 +1,8 @@
 <template>
   <AppLayout title="Métodos de pago">
     <ResourceCrud title="Listado de métodos de pago" singular="método de pago"
-      api-path="/metodos-pago" pk="id_metodo_pago" :columns="columns" :fields="fields" />
+      api-path="/metodos-pago" pk="id_metodo_pago" :columns="columns" :fields="fields"
+      :write-roles="[]" />
   </AppLayout>
 </template>
 
