@@ -18,6 +18,8 @@ const routes = [
   { path: '/metodos-pago', name: 'metodos-pago', component: () => import('../views/MetodosPagoView.vue') },
   { path: '/roles', name: 'roles', component: () => import('../views/RolesView.vue'),
     meta: { roles: [ROLES.ADMIN] } },
+  { path: '/auditoria', name: 'auditoria', component: () => import('../views/AuditoriaView.vue'),
+    meta: { roles: [ROLES.ADMIN] } },
 ];
 
 const router = createRouter({

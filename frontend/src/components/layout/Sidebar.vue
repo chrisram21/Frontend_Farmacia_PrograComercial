@@ -20,6 +20,7 @@
       <div class="sidebar__section">Administración</div>
       <router-link class="nav-item" to="/usuarios"><span class="ico">🧑‍💼</span> Usuarios</router-link>
       <router-link class="nav-item" to="/roles"><span class="ico">🛡️</span> Roles</router-link>
+      <router-link class="nav-item" to="/auditoria"><span class="ico">📋</span> Auditoría</router-link>
     </template>
   </aside>
 </template>
