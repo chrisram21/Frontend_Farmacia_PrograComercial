@@ -274,12 +274,43 @@ tbody tr:hover { background: rgba(255,255,255,.02); }
   .buscador { width: 100%; }
 }
 
+/* ---------- Reportes ---------- */
+.reporte__titulo { font-size: 18px; font-weight: 700; margin-top: 6px; }
+.reporte__titulo .muted { font-weight: 400; font-size: 14px; }
+.grafica__lienzo { height: 300px; position: relative; }
+.reporte__dona { display: grid; grid-template-columns: 320px 1fr; gap: 24px; align-items: center; }
+@media (max-width: 900px) { .reporte__dona { grid-template-columns: 1fr; } }
+
 /* ---------- Impresión ----------
-   La vista de comprobante marca el body con esta clase mientras está montada,
-   para neutralizar el tema oscuro sin afectar al resto de la aplicación. */
+   El comprobante (Fase 3) marca el body con esta clase mientras está montado; los
+   reportes (Fase 7) solo la ponen durante el diálogo de impresión, para verse en
+   tema oscuro en pantalla y en claro sobre el papel. */
 body.modo-impresion { background: #fff; color: #1f2430; }
 
 @media print {
   @page { margin: 14mm; }
+
   body.modo-impresion { background: #fff; }
+  body.modo-impresion .sidebar,
+  body.modo-impresion .topbar,
+  body.modo-impresion .no-imprimir { display: none !important; }
+  body.modo-impresion .app-content { padding: 0; }
+
+  body.modo-impresion .card {
+    background: #fff; border-color: #d1d5db; box-shadow: none; color: #1f2430;
+  }
+  body.modo-impresion .panel__title,
+  body.modo-impresion .stat__value,
+  body.modo-impresion .reporte__titulo,
+  body.modo-impresion tbody td { color: #1f2430; }
+  body.modo-impresion .muted,
+  body.modo-impresion .stat__label,
+  body.modo-impresion thead th { color: #6b7280; }
+  body.modo-impresion tbody td,
+  body.modo-impresion thead th { border-color: #e5e7eb; }
+  body.modo-impresion .stat__icon { background: #f3f4f6; }
+
+  /* Que una gráfica o una tabla no se parta entre dos páginas. */
+  body.modo-impresion .grafica,
+  body.modo-impresion .stat { break-inside: avoid; }
 }

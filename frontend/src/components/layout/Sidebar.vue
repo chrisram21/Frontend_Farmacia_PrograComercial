@@ -17,6 +17,10 @@
     <router-link class="nav-item" to="/metodos-pago"><span class="ico">💳</span> Métodos de pago</router-link>
 
     <template v-if="auth.puede([])">
+      <div class="sidebar__section">Reportes</div>
+      <router-link class="nav-item" to="/reportes/ventas"><span class="ico">📈</span> Ventas</router-link>
+      <router-link class="nav-item" to="/reportes/inventario"><span class="ico">📦</span> Inventario</router-link>
+
       <div class="sidebar__section">Administración</div>
       <router-link class="nav-item" to="/usuarios"><span class="ico">🧑‍💼</span> Usuarios</router-link>
       <router-link class="nav-item" to="/roles"><span class="ico">🛡️</span> Roles</router-link>

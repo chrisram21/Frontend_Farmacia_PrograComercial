@@ -22,6 +22,10 @@ const routes = [
     meta: { roles: [ROLES.ADMIN] } },
   { path: '/auditoria', name: 'auditoria', component: () => import('../views/AuditoriaView.vue'),
     meta: { roles: [ROLES.ADMIN] } },
+  { path: '/reportes/ventas', name: 'reporte-ventas',
+    component: () => import('../views/ReporteVentasView.vue'), meta: { roles: [ROLES.ADMIN] } },
+  { path: '/reportes/inventario', name: 'reporte-inventario',
+    component: () => import('../views/ReporteInventarioView.vue'), meta: { roles: [ROLES.ADMIN] } },
 ];
 
 const router = createRouter({
